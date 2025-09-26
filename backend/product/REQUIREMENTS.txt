@@ -1,0 +1,12 @@
+# Additional Requirements for Product App
+
+# QR Code generation
+qrcode[pil]==7.4.2
+Pillow==10.0.1
+
+# Django Filters (if not already installed)
+django-filter==23.2
+
+# UUID support (built into Python 3.x, no additional package needed)
+# PIL/Pillow for image processing
+# BytesIO for in-memory file handling (built into Python)
