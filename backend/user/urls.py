@@ -10,7 +10,7 @@ app_name = 'user'
 
 urlpatterns = [
     # API endpoints
-    path('api/', include(router.urls)),
+    path('', include(router.urls)),
 ]
 
 # Available API endpoints:

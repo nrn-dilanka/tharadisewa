@@ -1,6 +1,5 @@
 from django.db import models
 from django.core.validators import RegexValidator
-from shop.models import Shop
 import qrcode
 from io import BytesIO
 from django.core.files import File
@@ -18,14 +17,6 @@ class Product(models.Model):
         default=uuid.uuid4, 
         editable=False,
         help_text="Auto-generated unique identifier for the product"
-    )
-    
-    # Shop relation - Foreign Key to Shop model
-    shop = models.ForeignKey(
-        Shop,
-        on_delete=models.CASCADE,
-        related_name='products',
-        help_text="The shop this product belongs to"
     )
     
     # Product name with validation
@@ -86,17 +77,16 @@ class Product(models.Model):
     
     class Meta:
         ordering = ['-created_at', 'name']
-        unique_together = ['shop', 'name']  # Unique product name per shop
         verbose_name = "Product"
         verbose_name_plural = "Products"
         indexes = [
-            models.Index(fields=['shop', 'is_active']),
+            models.Index(fields=['is_active']),
             models.Index(fields=['name']),
             models.Index(fields=['created_at']),
         ]
     
     def __str__(self):
-        return f"{self.name} - {self.shop.name}"
+        return f"{self.name}"
     
     def save(self, *args, **kwargs):
         """
@@ -118,12 +108,10 @@ class Product(models.Model):
             qr_data = {
                 'product_id': str(self.id),
                 'product_name': self.name,
-                'shop_name': self.shop.name,
-                'shop_id': self.shop.id,
             }
             
             # Convert to string format for QR code
-            qr_string = f"PRODUCT_ID:{self.id}|NAME:{self.name}|SHOP:{self.shop.name}|SHOP_ID:{self.shop.id}"
+            qr_string = f"PRODUCT_ID:{self.id}|NAME:{self.name}"
             
             # Create QR code instance
             qr = qrcode.QRCode(
@@ -180,18 +168,6 @@ class Product(models.Model):
         if self.qr_code:
             return self.qr_code.url
         return None
-    
-    @property
-    def shop_info(self):
-        """
-        Get shop information as a dictionary
-        """
-        return {
-            'shop_id': self.shop.id,
-            'shop_name': self.shop.name,
-            'shop_address': self.shop.full_address,
-            'customer_name': self.shop.customer.get_full_name(),
-        }
     
     @property
     def product_code(self):

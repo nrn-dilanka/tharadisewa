@@ -17,7 +17,6 @@ class TechnicalModelAdmin(admin.ModelAdmin):
         'model',
         'model_code_display',
         'product_link',
-        'shop_name',
         'year_released',
         'status_colored',
         'specification_count',
@@ -31,7 +30,6 @@ class TechnicalModelAdmin(admin.ModelAdmin):
         'manufacturer',
         'is_active',
         'is_discontinued',
-        'product__shop',
         'created_at'
     ]
     
@@ -43,7 +41,6 @@ class TechnicalModelAdmin(admin.ModelAdmin):
         'manufacturer',
         'country_of_origin',
         'product__name',
-        'product__shop__name',
         'notes'
     ]
     
@@ -51,10 +48,8 @@ class TechnicalModelAdmin(admin.ModelAdmin):
         'id',
         'full_model_name',
         'model_code',
-        'shop',
         'product_name',
         'product_info_display',
-        'shop_info_display',
         'specifications_display',
         'technical_summary_display',
         'created_at',
@@ -80,12 +75,6 @@ class TechnicalModelAdmin(admin.ModelAdmin):
                 'year_released',
                 'country_of_origin',
                 'manufacturer'
-            )
-        }),
-        ('Shop Information', {
-            'fields': (
-                'shop',
-                'shop_info_display'
             )
         }),
         ('Status', {
@@ -131,16 +120,6 @@ class TechnicalModelAdmin(admin.ModelAdmin):
         return '-'
     product_link.short_description = 'Product'
     product_link.admin_order_field = 'product__name'
-    
-    def shop_name(self, obj):
-        """
-        Display shop name
-        """
-        if obj.shop:
-            return obj.shop.name
-        return '-'
-    shop_name.short_description = 'Shop'
-    shop_name.admin_order_field = 'product__shop__name'
     
     def model_code_display(self, obj):
         """
@@ -201,22 +180,6 @@ class TechnicalModelAdmin(admin.ModelAdmin):
             )
         return 'No product information'
     product_info_display.short_description = 'Product Information'
-    
-    def shop_info_display(self, obj):
-        """
-        Display formatted shop information
-        """
-        if obj.shop:
-            return format_html(
-                '<strong>Shop:</strong> {}<br>'
-                '<strong>Address:</strong> {}<br>'
-                '<strong>Owner:</strong> {}',
-                obj.shop.name,
-                obj.shop.full_address,
-                obj.shop.customer.get_full_name()
-            )
-        return 'No shop information'
-    shop_info_display.short_description = 'Shop Information'
     
     def specifications_display(self, obj):
         """
@@ -317,7 +280,7 @@ class TechnicalModelAdmin(admin.ModelAdmin):
         Optimize queryset with select_related
         """
         return super().get_queryset(request).select_related(
-            'product__shop__customer'
+            'product'
         )
     
     def changelist_view(self, request, extra_context=None):

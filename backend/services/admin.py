@@ -18,7 +18,6 @@ class ServiceAdmin(admin.ModelAdmin):
         'customer_link',
         'product_link',
         'purchase_link',
-        'shop_name',
         'status_colored',
         'priority_colored',
         'service_cost',
@@ -36,7 +35,6 @@ class ServiceAdmin(admin.ModelAdmin):
         'is_active',
         'date',
         'created_at',
-        'product__shop',
         'rating'
     ]
     
@@ -48,7 +46,6 @@ class ServiceAdmin(admin.ModelAdmin):
         'purchase__customer__first_name',
         'purchase__customer__last_name',
         'product__name',
-        'product__shop__name',
         'id'
     ]
     
@@ -58,7 +55,6 @@ class ServiceAdmin(admin.ModelAdmin):
         'customer_display',
         'purchase_info_display',
         'product_info_display',
-        'shop_info_display',
         'service_summary_display',
         'duration_since_purchase',
         'is_overdue',
@@ -82,8 +78,7 @@ class ServiceAdmin(admin.ModelAdmin):
                 'purchase_info_display',
                 'product',
                 'product_info_display',
-                'customer_display',
-                'shop_info_display'
+                'customer_display'
             )
         }),
         ('Service Details', {
@@ -158,16 +153,6 @@ class ServiceAdmin(admin.ModelAdmin):
         return '-'
     purchase_link.short_description = 'Purchase'
     purchase_link.admin_order_field = 'purchase__date'
-    
-    def shop_name(self, obj):
-        """
-        Display shop name
-        """
-        if obj.shop:
-            return obj.shop.name
-        return '-'
-    shop_name.short_description = 'Shop'
-    shop_name.admin_order_field = 'product__shop__name'
     
     def date_formatted(self, obj):
         """
@@ -311,22 +296,6 @@ class ServiceAdmin(admin.ModelAdmin):
         return 'No product information'
     product_info_display.short_description = 'Product Information'
     
-    def shop_info_display(self, obj):
-        """
-        Display formatted shop information
-        """
-        if obj.shop:
-            return format_html(
-                '<strong>Shop:</strong> {}<br>'
-                '<strong>Address:</strong> {}<br>'
-                '<strong>Owner:</strong> {}',
-                obj.shop.name,
-                obj.shop.full_address,
-                obj.shop.customer.get_full_name()
-            )
-        return 'No shop information'
-    shop_info_display.short_description = 'Shop Information'
-    
     def service_summary_display(self, obj):
         """
         Display formatted service summary
@@ -419,7 +388,7 @@ class ServiceAdmin(admin.ModelAdmin):
         """
         return super().get_queryset(request).select_related(
             'purchase__customer',
-            'product__shop__customer'
+            'product'
         )
     
     def changelist_view(self, request, extra_context=None):

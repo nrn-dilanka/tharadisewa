@@ -15,7 +15,6 @@ class PurchaseAdmin(admin.ModelAdmin):
         'date_formatted',
         'customer_link',
         'product_link',
-        'shop_name',
         'quantity',
         'unit_price',
         'total_amount',
@@ -31,7 +30,6 @@ class PurchaseAdmin(admin.ModelAdmin):
         'is_active',
         'date',
         'created_at',
-        'product__shop',
         'customer'
     ]
     
@@ -40,7 +38,6 @@ class PurchaseAdmin(admin.ModelAdmin):
         'customer__first_name',
         'customer__last_name',
         'product__name',
-        'product__shop__name',
         'notes',
         'id'
     ]
@@ -51,7 +48,6 @@ class PurchaseAdmin(admin.ModelAdmin):
         'total_amount',
         'customer_info_display',
         'product_info_display',
-        'shop_info_display',
         'purchase_summary_display',
         'created_at',
         'updated_at'
@@ -70,8 +66,7 @@ class PurchaseAdmin(admin.ModelAdmin):
                 'customer',
                 'customer_info_display',
                 'product',
-                'product_info_display',
-                'shop_info_display'
+                'product_info_display'
             )
         }),
         ('Purchase Details', {
@@ -125,16 +120,6 @@ class PurchaseAdmin(admin.ModelAdmin):
         return '-'
     product_link.short_description = 'Product'
     product_link.admin_order_field = 'product__name'
-    
-    def shop_name(self, obj):
-        """
-        Display shop name
-        """
-        if obj.product and obj.product.shop:
-            return obj.product.shop.name
-        return '-'
-    shop_name.short_description = 'Shop'
-    shop_name.admin_order_field = 'product__shop__name'
     
     def date_formatted(self, obj):
         """
@@ -196,23 +181,6 @@ class PurchaseAdmin(admin.ModelAdmin):
             )
         return 'No product assigned'
     product_info_display.short_description = 'Product Information'
-    
-    def shop_info_display(self, obj):
-        """
-        Display formatted shop information
-        """
-        if obj.product and obj.product.shop:
-            shop = obj.product.shop
-            return format_html(
-                '<strong>Shop:</strong> {}<br>'
-                '<strong>Address:</strong> {}<br>'
-                '<strong>Owner:</strong> {}',
-                shop.name,
-                shop.full_address,
-                shop.customer.get_full_name()
-            )
-        return 'No shop information'
-    shop_info_display.short_description = 'Shop Information'
     
     def purchase_summary_display(self, obj):
         """
@@ -305,9 +273,7 @@ class PurchaseAdmin(admin.ModelAdmin):
         """
         return super().get_queryset(request).select_related(
             'customer',
-            'product',
-            'product__shop',
-            'product__shop__customer'
+            'product'
         )
     
     def changelist_view(self, request, extra_context=None):

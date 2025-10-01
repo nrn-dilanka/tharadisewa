@@ -9,7 +9,7 @@ def product_post_save(sender, instance, created, **kwargs):
     Signal handler for post-save events on Product model
     """
     if created:
-        print(f"New product created: {instance.name} for shop {instance.shop.name}")
+        print(f"New product created: {instance.name}")
 
 @receiver(pre_delete, sender=Product)
 def product_pre_delete(sender, instance, **kwargs):

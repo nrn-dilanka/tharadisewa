@@ -17,14 +17,19 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
+from user.test_views import test_connection, health_check, list_urls
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/auth/", include('user.auth_urls')),
+    path("api/test-connection/", test_connection, name='api_test_connection'),
+    path("api/health/", health_check, name='api_health_check'),
+    path("api/debug/urls/", list_urls, name='api_debug_urls'),
     path("api/", include('user.urls')),
     path("api/", include('customer.urls')),
     path("api/", include('customer_contact.urls')),
     path("api/", include('shop.urls')),
-    path("api/", include('customer_location.urls')),
+    path("api/", include('location.urls')),
     path("api/", include('product.urls')),
     path("api/", include('purchase.urls')),
     path("api/", include('services.urls')),

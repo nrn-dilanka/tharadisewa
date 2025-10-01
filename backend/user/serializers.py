@@ -61,6 +61,72 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ['username']
 
 
+class AdminUserUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for admin updating user information (includes password and role)
+    """
+    password = serializers.CharField(
+        write_only=True,
+        required=False,
+        validators=[validate_password],
+        style={'input_type': 'password'}
+    )
+    password_confirm = serializers.CharField(
+        write_only=True,
+        required=False,
+        style={'input_type': 'password'}
+    )
+    
+    class Meta:
+        model = User
+        fields = [
+            'first_name', 'last_name', 'email', 'phone_number', 'role',
+            'date_of_birth', 'address', 'profile_image', 'is_verified', 
+            'is_active', 'password', 'password_confirm'
+        ]
+        read_only_fields = ['username']
+    
+    def validate(self, attrs):
+        """
+        Validate password fields if provided
+        """
+        password = attrs.get('password')
+        password_confirm = attrs.get('password_confirm')
+        
+        # If password is provided, password_confirm is required
+        if password and not password_confirm:
+            raise serializers.ValidationError({
+                'password_confirm': 'Password confirmation is required when setting a new password'
+            })
+        
+        # If either password field is provided, both must match
+        if (password or password_confirm) and password != password_confirm:
+            raise serializers.ValidationError({
+                'password_confirm': "Passwords don't match"
+            })
+        
+        return attrs
+    
+    def update(self, instance, validated_data):
+        """
+        Update user with optional password change
+        """
+        # Handle password separately
+        password = validated_data.pop('password', None)
+        validated_data.pop('password_confirm', None)
+        
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # Update password if provided
+        if password:
+            instance.set_password(password)
+        
+        instance.save()
+        return instance
+
+
 class UserDetailSerializer(serializers.ModelSerializer):
     """
     Detailed serializer for user information
@@ -99,8 +165,10 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'full_name', 'phone_number',
-            'role', 'is_verified', 'is_active', 'date_joined'
+            'id', 'username', 'email', 'first_name', 'last_name', 'full_name',
+            'phone_number', 'role', 'date_of_birth', 'address', 'profile_image',
+            'is_verified', 'is_active', 'is_staff', 'date_joined', 'last_login',
+            'created_at', 'updated_at'
         ]
 
 

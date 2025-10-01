@@ -18,7 +18,6 @@ class RepairAdmin(admin.ModelAdmin):
         'customer_link',
         'product_link',
         'purchase_link',
-        'shop_name',
         'repair_type_colored',
         'status_colored',
         'priority_colored',
@@ -39,7 +38,6 @@ class RepairAdmin(admin.ModelAdmin):
         'technician_name',
         'date',
         'estimated_completion',
-        'purchase__product__shop',
         'created_at'
     ]
     
@@ -52,8 +50,7 @@ class RepairAdmin(admin.ModelAdmin):
         'purchase__customer__first_name',
         'purchase__customer__last_name',
         'purchase__customer__username',
-        'purchase__product__name',
-        'purchase__product__shop__name'
+        'purchase__product__name'
     ]
     
     readonly_fields = [
@@ -61,14 +58,12 @@ class RepairAdmin(admin.ModelAdmin):
         'repair_code',
         'customer',
         'product',
-        'shop',
         'is_overdue',
         'duration',
         'days_in_repair',
         'customer_info_display',
         'product_info_display',
         'purchase_info_display',
-        'shop_info_display',
         'repair_summary_display',
         'parts_summary_display',
         'created_at',
@@ -99,8 +94,7 @@ class RepairAdmin(admin.ModelAdmin):
         ('Related Information', {
             'fields': (
                 'customer_info_display',
-                'product_info_display',
-                'shop_info_display'
+                'product_info_display'
             )
         }),
         ('Costs and Parts', {
@@ -187,16 +181,6 @@ class RepairAdmin(admin.ModelAdmin):
         return '-'
     purchase_link.short_description = 'Purchase'
     purchase_link.admin_order_field = 'purchase__date'
-    
-    def shop_name(self, obj):
-        """
-        Display shop name
-        """
-        if obj.shop:
-            return obj.shop.name
-        return '-'
-    shop_name.short_description = 'Shop'
-    shop_name.admin_order_field = 'purchase__product__shop__name'
     
     def date_formatted(self, obj):
         """
@@ -355,22 +339,6 @@ class RepairAdmin(admin.ModelAdmin):
         return 'No purchase information'
     purchase_info_display.short_description = 'Purchase Information'
     
-    def shop_info_display(self, obj):
-        """
-        Display formatted shop information
-        """
-        if obj.shop:
-            return format_html(
-                '<strong>Shop:</strong> {}<br>'
-                '<strong>Address:</strong> {}<br>'
-                '<strong>Owner:</strong> {}',
-                obj.shop.name,
-                obj.shop.full_address,
-                obj.shop.customer.get_full_name()
-            )
-        return 'No shop information'
-    shop_info_display.short_description = 'Shop Information'
-    
     def parts_summary_display(self, obj):
         """
         Display formatted parts summary
@@ -496,7 +464,7 @@ class RepairAdmin(admin.ModelAdmin):
         """
         return super().get_queryset(request).select_related(
             'purchase__customer',
-            'purchase__product__shop__customer'
+            'purchase__product'
         )
     
     def changelist_view(self, request, extra_context=None):

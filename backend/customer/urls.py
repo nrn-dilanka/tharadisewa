@@ -9,8 +9,8 @@ router.register(r'customers', CustomerViewSet, basename='customer')
 app_name = 'customer'
 
 urlpatterns = [
-    # API endpoints
-    path('api/', include(router.urls)),
+    # API endpoints - removed extra /api/ prefix since it's already in main urls.py
+    path('', include(router.urls)),
 ]
 
 # Available API endpoints:

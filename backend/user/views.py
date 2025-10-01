@@ -12,6 +12,7 @@ from django.http import HttpResponse
 import csv
 
 from .models import User
+from .permissions import IsAdminUser, IsAdminOrManager, IsStaffUser, IsOwnerOrStaff
 from .serializers import (
     UserCreateSerializer, UserUpdateSerializer, UserDetailSerializer,
     UserListSerializer, UserProfileSerializer, ChangePasswordSerializer,
@@ -106,14 +107,26 @@ class UserViewSet(viewsets.ModelViewSet):
         Set different permissions for different actions
         """
         if self.action == 'create':
-            # Allow user creation (registration)
-            permission_classes = [AllowAny]
+            # Only allow user creation for admins (registration is handled separately)
+            permission_classes = [IsAdminUser]
         elif self.action in ['profile', 'change_password']:
             # Allow authenticated users to view/edit their own profile
             permission_classes = [IsAuthenticated]
-        elif self.action in ['update_role', 'statistics', 'export']:
+        elif self.action in ['update_role', 'activate', 'deactivate', 'verify']:
+            # Admin and manager actions
+            permission_classes = [IsAdminOrManager]
+        elif self.action in ['statistics', 'export', 'bulk_operations']:
             # Admin-only actions
-            permission_classes = [IsAuthenticated]
+            permission_classes = [IsAdminUser]
+        elif self.action in ['staff', 'customers']:
+            # Staff member actions
+            permission_classes = [IsStaffUser]
+        elif self.action in ['list', 'retrieve']:
+            # Staff can view all, others can only view own data
+            permission_classes = [IsOwnerOrStaff]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            # Staff can edit all, others can only edit own data
+            permission_classes = [IsOwnerOrStaff]
         else:
             permission_classes = [IsAuthenticated]
         
@@ -134,16 +147,7 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         Custom create method with role validation
         """
-        # Check if user has permission to create users with specified role
-        role = request.data.get('role', 'customer')
-        
-        if hasattr(request, 'user') and request.user.is_authenticated:
-            if role in ['admin', 'manager'] and not request.user.is_admin():
-                return Response(
-                    {'error': 'Insufficient permissions to create admin/manager users'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-        
+        # Permission classes already handle admin checks
         return super().create(request, *args, **kwargs)
     
     @action(detail=False, methods=['get', 'put', 'patch'])
@@ -190,13 +194,6 @@ class UserViewSet(viewsets.ModelViewSet):
         Update user role (admin/manager only)
         """
         user = self.get_object()
-        
-        # Check permissions
-        if not (request.user.is_admin() or request.user.is_manager()):
-            return Response(
-                {'error': 'Insufficient permissions'},
-                status=status.HTTP_403_FORBIDDEN
-            )
         
         # Prevent users from changing their own role
         if user == request.user:

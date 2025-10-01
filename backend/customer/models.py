@@ -67,12 +67,6 @@ class Customer(models.Model):
     )
     
     # Additional customer fields
-    date_of_birth = models.DateField(
-        blank=True,
-        null=True,
-        help_text="Date of birth"
-    )
-    
     address = models.TextField(
         blank=True,
         help_text="Customer address"
@@ -114,8 +108,17 @@ class Customer(models.Model):
                 new_id = 1
                 
             self.customer_id = f"CUST{new_id:06d}"  # Format: CUST000001
-            
+        
+        # Check if this is a new customer
+        is_new = self.pk is None
         super().save(*args, **kwargs)
+        
+        # After saving, update primary contact email if it exists and email changed
+        if not is_new:
+            primary_contact = self.get_primary_contact()
+            if primary_contact and primary_contact.email != self.email:
+                primary_contact.email = self.email
+                primary_contact.save()
     
     def get_full_name(self):
         """
@@ -156,3 +159,86 @@ class Customer(models.Model):
         self.save()
         
         return user
+    
+    # Customer Contact Relations
+    def get_contacts(self):
+        """
+        Get all contacts for this customer
+        """
+        return self.contacts.filter(is_active=True)
+    
+    def get_primary_contact(self):
+        """
+        Get the primary contact for this customer
+        """
+        return self.contacts.filter(is_primary=True, is_active=True).first()
+    
+    def add_contact(self, email, wa_number, tp_number, is_primary=False):
+        """
+        Add a new contact for this customer
+        """
+        from customer_contact.models import CustomerContact
+        
+        # If this will be primary, set others to non-primary
+        if is_primary:
+            self.contacts.filter(is_primary=True).update(is_primary=False)
+        
+        contact = CustomerContact.objects.create(
+            customer=self,
+            email=email,
+            wa_number=wa_number,
+            tp_number=tp_number,
+            is_primary=is_primary
+        )
+        
+        return contact
+    
+    def update_primary_contact(self, contact_id):
+        """
+        Set a specific contact as primary for this customer
+        """
+        # Set all contacts to non-primary
+        self.contacts.all().update(is_primary=False)
+        
+        # Set the specified contact as primary
+        contact = self.contacts.filter(id=contact_id).first()
+        if contact:
+            contact.is_primary = True
+            contact.save()
+            return contact
+        return None
+    
+    def get_contact_summary(self):
+        """
+        Get a summary of all customer contacts
+        """
+        contacts = self.get_contacts()
+        primary_contact = self.get_primary_contact()
+        
+        return {
+            'total_contacts': contacts.count(),
+            'primary_contact': {
+                'email': primary_contact.email if primary_contact else None,
+                'whatsapp': primary_contact.wa_number if primary_contact else None,
+                'telephone': primary_contact.tp_number if primary_contact else None,
+            } if primary_contact else None,
+            'all_contacts': [contact.contact_info for contact in contacts],
+        }
+    
+    @property
+    def primary_email(self):
+        """Get primary contact email, fallback to customer email"""
+        primary_contact = self.get_primary_contact()
+        return primary_contact.email if primary_contact else self.email
+    
+    @property
+    def primary_whatsapp(self):
+        """Get primary WhatsApp number"""
+        primary_contact = self.get_primary_contact()
+        return primary_contact.wa_number if primary_contact else None
+    
+    @property
+    def primary_telephone(self):
+        """Get primary telephone number, fallback to customer phone"""
+        primary_contact = self.get_primary_contact()
+        return primary_contact.tp_number if primary_contact else self.phone_number

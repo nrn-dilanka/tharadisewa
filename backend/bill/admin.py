@@ -17,7 +17,6 @@ class BillAdmin(admin.ModelAdmin):
         'customer_link',
         'service_link',
         'purchase_link',
-        'shop_name',
         'amount_colored',
         'status_colored',
         'due_date_formatted',
@@ -31,7 +30,6 @@ class BillAdmin(admin.ModelAdmin):
         'date',
         'due_date',
         'service__service_type',
-        'service__product__shop',
         'created_at',
         'tax_rate',
     ]
@@ -43,8 +41,7 @@ class BillAdmin(admin.ModelAdmin):
         'purchase__customer__last_name',
         'purchase__customer__username',
         'service__description',
-        'service__product__name',
-        'service__product__shop__name'
+        'service__product__name'
     ]
     
     readonly_fields = [
@@ -57,7 +54,6 @@ class BillAdmin(admin.ModelAdmin):
         'customer_display',
         'service_info_display',
         'purchase_info_display',
-        'shop_info_display',
         'bill_summary_display',
         'is_overdue',
         'days_until_due',
@@ -82,8 +78,7 @@ class BillAdmin(admin.ModelAdmin):
                 'service_info_display',
                 'purchase', 
                 'purchase_info_display',
-                'customer_display',
-                'shop_info_display'
+                'customer_display'
             )
         }),
         ('Bill Details', {
@@ -157,16 +152,6 @@ class BillAdmin(admin.ModelAdmin):
         return '-'
     purchase_link.short_description = 'Purchase'
     purchase_link.admin_order_field = 'purchase__date'
-    
-    def shop_name(self, obj):
-        """
-        Display shop name
-        """
-        if obj.shop:
-            return obj.shop.name
-        return '-'
-    shop_name.short_description = 'Shop'
-    shop_name.admin_order_field = 'service__product__shop__name'
     
     def date_formatted(self, obj):
         """
@@ -314,22 +299,6 @@ class BillAdmin(admin.ModelAdmin):
         return 'No purchase information'
     purchase_info_display.short_description = 'Purchase Information'
     
-    def shop_info_display(self, obj):
-        """
-        Display formatted shop information
-        """
-        if obj.shop:
-            return format_html(
-                '<strong>Shop:</strong> {}<br>'
-                '<strong>Address:</strong> {}<br>'
-                '<strong>Owner:</strong> {}',
-                obj.shop.name,
-                obj.shop.full_address,
-                obj.shop.customer.get_full_name()
-            )
-        return 'No shop information'
-    shop_info_display.short_description = 'Shop Information'
-    
     def bill_summary_display(self, obj):
         """
         Display formatted bill summary
@@ -428,7 +397,7 @@ class BillAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related(
             'service',
             'purchase__customer',
-            'service__product__shop__customer'
+            'service__product'
         )
     
     def changelist_view(self, request, extra_context=None):

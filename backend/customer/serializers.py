@@ -14,7 +14,7 @@ class CustomerCreateSerializer(serializers.ModelSerializer):
         model = Customer
         fields = (
             'first_name', 'last_name', 'email', 'phone_number', 'nic',
-            'date_of_birth', 'address', 'username', 'password', 'create_user_account'
+            'address', 'username', 'password', 'create_user_account'
         )
 
     def validate_nic(self, value):
@@ -72,7 +72,7 @@ class CustomerSerializer(serializers.ModelSerializer):
         model = Customer
         fields = (
             'id', 'customer_id', 'email', 'first_name', 'last_name', 'full_name',
-            'phone_number', 'nic', 'date_of_birth', 'address', 'is_verified',
+            'phone_number', 'nic', 'address', 'is_verified',
             'is_active', 'has_user_account', 'user_info', 'created_at', 'updated_at'
         )
         read_only_fields = ('id', 'customer_id', 'created_at', 'updated_at')
@@ -98,7 +98,7 @@ class CustomerUpdateSerializer(serializers.ModelSerializer):
         model = Customer
         fields = (
             'first_name', 'last_name', 'email', 'phone_number',
-            'date_of_birth', 'address'
+            'address'
         )
 
     def validate_email(self, value):
@@ -121,8 +121,9 @@ class CustomerListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = (
-            'id', 'customer_id', 'full_name', 'email', 'phone_number',
-            'nic', 'is_verified', 'is_active', 'has_user_account', 'created_at'
+            'id', 'customer_id', 'email', 'first_name', 'last_name', 'full_name',
+            'phone_number', 'nic', 'address', 'is_verified',
+            'is_active', 'has_user_account', 'created_at', 'updated_at'
         )
 
 

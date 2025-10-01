@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-*w&^jfgqe*+bz@0k^o*=(a0hlp=08tx=4_0j@&7*4j0^qdokxb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0', '192.168.8.160']
 
 
 # Application definition
@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'customer',
     'customer_contact',
     'shop',
-    'customer_location',
+    'location',
     'product',
     'purchase',
     'services',
@@ -199,9 +199,33 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:8080",  # Vue default
     "http://127.0.0.1:8080",
+    "http://192.168.8.160:8081",  # Expo dev server
+    "http://192.168.8.160:19000", # Expo dev server alternative
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
 # Allow all origins during development (change this in production)
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Additional CORS settings for mobile apps
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+CORS_ALLOWED_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]

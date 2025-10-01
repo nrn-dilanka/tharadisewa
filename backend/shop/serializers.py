@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Shop
 from customer.models import Customer
-from customer_location.models import CustomerLocation
+from location.models import CustomerLocation
 
 
 class ShopSerializer(serializers.ModelSerializer):
@@ -48,14 +48,23 @@ class ShopSerializer(serializers.ModelSerializer):
 
 class ShopCreateSerializer(serializers.ModelSerializer):
     """
-    Serializer for creating Shop
+    Serializer for creating Shop with GPS location
     """
+    # GPS location fields (optional)
+    latitude = serializers.DecimalField(max_digits=10, decimal_places=8, required=False, write_only=True)
+    longitude = serializers.DecimalField(max_digits=11, decimal_places=8, required=False, write_only=True)
+    location_accuracy = serializers.IntegerField(required=False, write_only=True)
+    location_name = serializers.CharField(max_length=255, required=False, write_only=True)
+    location_description = serializers.CharField(required=False, write_only=True, allow_blank=True)
+    
     class Meta:
         model = Shop
         fields = (
             'name', 'postal_code', 'address_line_1', 'address_line_2',
             'address_line_3', 'city', 'customer', 'phone_number', 
-            'email', 'description', 'is_active'
+            'email', 'description', 'is_active',
+            # GPS location fields
+            'latitude', 'longitude', 'location_accuracy', 'location_name', 'location_description'
         )
 
     def validate(self, attrs):
@@ -79,9 +88,32 @@ class ShopCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """
-        Create a new shop
+        Create a new shop and optionally create GPS location
         """
-        return Shop.objects.create(**validated_data)
+        # Extract GPS location data
+        latitude = validated_data.pop('latitude', None)
+        longitude = validated_data.pop('longitude', None)
+        location_accuracy = validated_data.pop('location_accuracy', None)
+        location_name = validated_data.pop('location_name', None)
+        location_description = validated_data.pop('location_description', None)
+        
+        # Create the shop
+        shop = Shop.objects.create(**validated_data)
+        
+        # Create GPS location if coordinates are provided
+        if latitude is not None and longitude is not None:
+            CustomerLocation.objects.create(
+                shop=shop,
+                latitude=latitude,
+                longitude=longitude,
+                accuracy_radius=location_accuracy,
+                location_name=location_name or f"{shop.name} Location",
+                address_description=location_description or shop.full_address,
+                is_primary=True,  # First location is primary
+                is_active=True
+            )
+        
+        return shop
 
 
 class ShopUpdateSerializer(serializers.ModelSerializer):
@@ -138,7 +170,7 @@ class ShopWithLocationsSerializer(serializers.ModelSerializer):
         """
         Get all locations for this shop
         """
-        from customer_location.serializers import CustomerLocationSerializer
+        from location.serializers import CustomerLocationSerializer
         locations = obj.customer_locations.filter(is_active=True).order_by('-is_primary', '-created_at')
         return CustomerLocationSerializer(locations, many=True).data
     
@@ -146,7 +178,7 @@ class ShopWithLocationsSerializer(serializers.ModelSerializer):
         """
         Get the primary location for this shop
         """
-        from customer_location.serializers import CustomerLocationSerializer
+        from location.serializers import CustomerLocationSerializer
         primary_location = obj.customer_locations.filter(is_primary=True, is_active=True).first()
         if primary_location:
             return CustomerLocationSerializer(primary_location).data

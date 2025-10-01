@@ -21,7 +21,7 @@ class LicenseAdmin(admin.ModelAdmin):
         ('in_date', admin.DateFieldListFilter),
         ('ex_date', admin.DateFieldListFilter),
         ('activated_date', admin.DateFieldListFilter),
-        'purchase__product__shop', 'purchase__customer'
+        'purchase__customer'
     ]
     
     search_fields = [
@@ -32,7 +32,7 @@ class LicenseAdmin(admin.ModelAdmin):
     
     readonly_fields = [
         'id', 'license_number', 'license_key', 'created_at', 'updated_at',
-        'customer_info', 'product_info', 'shop_info', 'license_summary',
+        'customer_info', 'product_info', 'license_summary',
         'usage_summary', 'expiry_info'
     ]
     
@@ -71,7 +71,7 @@ class LicenseAdmin(admin.ModelAdmin):
         }),
         ('Related Information', {
             'fields': (
-                'customer_info', 'product_info', 'shop_info'
+                'customer_info', 'product_info'
             ),
             'classes': ('collapse',)
         }),
@@ -101,8 +101,7 @@ class LicenseAdmin(admin.ModelAdmin):
         Optimize queryset with select_related
         """
         return super().get_queryset(request).select_related(
-            'purchase', 'purchase__customer', 'purchase__product',
-            'purchase__product__shop'
+            'purchase', 'purchase__customer', 'purchase__product'
         )
     
     def status_badge(self, obj):
@@ -230,22 +229,6 @@ class LicenseAdmin(admin.ModelAdmin):
             )
         return 'No product information'
     product_info.short_description = 'Product Information'
-    
-    def shop_info(self, obj):
-        """
-        Display shop information
-        """
-        if obj.shop:
-            return format_html(
-                '<strong>Name:</strong> {}<br>'
-                '<strong>Email:</strong> {}<br>'
-                '<strong>Phone:</strong> {}',
-                obj.shop.name,
-                obj.shop.email or 'N/A',
-                obj.shop.phone or 'N/A'
-            )
-        return 'No shop information'
-    shop_info.short_description = 'Shop Information'
     
     def license_summary(self, obj):
         """
